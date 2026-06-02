@@ -76,6 +76,43 @@
     <!-- 现有脚本 (保留 Mermaid, MathJax, highlight.js) -->
     <script src="http://assets.example/highlight_js/highlight.min.js"></script>
     <script src="http://assets.example/mermaid/mermaid.min.js"></script>
+    
+    <!-- MathJax 配置: 在 data: URL 中禁用 localStorage/speech 以避免控制台错误 -->
+    <script>
+      // localStorage 在 data: URL 中不可用, 提供安全的内存垫片
+      try { localStorage.getItem('_test_'); }
+      catch(e) {
+        var _memStore = {};
+        var _safeStorage = {
+          getItem: function(k) { return _memStore[k] || null; },
+          setItem: function(k, v) { _memStore[k] = String(v); },
+          removeItem: function(k) { delete _memStore[k]; },
+          clear: function() { _memStore = {}; },
+          key: function(i) { return Object.keys(_memStore)[i] || null; },
+          get length() { return Object.keys(_memStore).length; }
+        };
+        try {
+          // 尝试直接覆盖 (部分环境支持)
+          window.localStorage = _safeStorage;
+        } catch(e2) {
+          // 不行就用 Object.defineProperty (现代浏览器)
+          try {
+            Object.defineProperty(window, 'localStorage', {
+              value: _safeStorage, writable: false, configurable: true
+            });
+          } catch(e3) {}
+        }
+      }
+      // 配置 MathJax: 不加载 speech-rule 引擎 (避免 WebWorker + localStorage 错误)
+      window.MathJax = {
+        loader: { load: ['input/tex', 'output/svg'] },
+        options: {
+          enableMenu: false,
+          sre: { speech: false, disabled: true }
+        },
+        tex: { packages: { '[+]': ['base'] } }
+      };
+    </script>
     <script src="http://assets.example/mathjax/tex-svg.js"></script>
   </head>
   <body>

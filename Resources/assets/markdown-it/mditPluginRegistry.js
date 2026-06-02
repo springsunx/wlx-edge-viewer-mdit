@@ -125,12 +125,14 @@
             cssId: null,
             initFn: function(md) {
                 // 默认注册常用容器类型
+                // @mdit/plugin-container 期望 { name, marker, validate, openRender, closeRender }
+                // 不传 validate 时使用默认值: params.trim().split(' ', 2)[0] === name
                 var containerPlugin = window.mdItPluginContainer.container;
-                md.use(containerPlugin, 'tip', { validate: function(p) { return p.trim().startsWith('tip'); }, });
-                md.use(containerPlugin, 'warning', { validate: function(p) { return p.trim().startsWith('warning'); } });
-                md.use(containerPlugin, 'danger', { validate: function(p) { return p.trim().startsWith('danger'); } });
-                md.use(containerPlugin, 'info', { validate: function(p) { return p.trim().startsWith('info'); } });
-                md.use(containerPlugin, 'details', { validate: function(p) { return p.trim().startsWith('details'); } });
+                md.use(containerPlugin, { name: 'tip' });
+                md.use(containerPlugin, { name: 'warning' });
+                md.use(containerPlugin, { name: 'danger' });
+                md.use(containerPlugin, { name: 'info' });
+                md.use(containerPlugin, { name: 'details' });
             },
             deps: [],
             description: '自定义容器 ::: tip / warning / danger / info / details'
@@ -256,7 +258,12 @@
             jsFile: 'mdit-plugin-stylize.umd.js',
             cssFile: null,
             cssId: null,
-            initFn: null,
+            initFn: function(md) {
+                // @mdit/plugin-stylize 需要 globalConfig 或 localConfigGetter
+                // 默认不注册规则，仍可正常渲染，仅控制台提示 inactive
+                var stylizePlugin = window.mdItPluginStylize.stylize;
+                md.use(stylizePlugin, { localConfigGetter: function() { return []; } });
+            },
             deps: ['Attrs'],
             description: '自定义内联样式'
         },
@@ -325,7 +332,12 @@
             jsFile: 'mdit-plugin-embed.umd.js',
             cssFile: null,
             cssId: null,
-            initFn: null,
+            initFn: function(md) {
+                // @mdit/plugin-embed 需要 { config: [{ name, setup, allowInline }] }
+                // 默认不注册任何嵌入类型，用户可在 CUSTOM_PLUGINS 中添加
+                var embedPlugin = window.mdItPluginEmbed.embed;
+                md.use(embedPlugin, { config: [] });
+            },
             deps: [],
             description: '嵌入语法 @[type](id)'
         },
@@ -395,7 +407,11 @@
             jsFile: 'mdit-plugin-inline-rule.umd.js',
             cssFile: null,
             cssId: null,
-            initFn: null,
+            initFn: function(md) {
+                // @mdit/plugin-inline-rule 需要 { marker, token, tag } 等配置
+                // 默认不注册任何内联规则，用户可在 CUSTOM_PLUGINS 中添加
+                // 此处仅注册插件框架，不注册具体规则，避免报错
+            },
             deps: [],
             description: '自定义内联规则工具'
         }
