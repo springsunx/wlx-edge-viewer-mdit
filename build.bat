@@ -68,6 +68,11 @@ echo.
 echo [2/3] Building x64 (%CONFIG%)...
 echo.
 
+:: Switch to x64 environment for x64 build
+if not "%VSCMD_ARG_TGT_ARCH%"=="x64" (
+    echo [INFO] Switching to x64 environment...
+    call "%%VCINSTALLDIR%%\Auxiliary\Build\vcvarsall.bat" x64
+)
 msbuild EdgeViewer.sln /t:Build /p:Configuration=%CONFIG%;Platform=x64;UseEnv=true /v:minimal
 if errorlevel 1 (
     echo [ERROR] x64 build failed!

@@ -2,7 +2,7 @@
 #include "Navigator.h"
 
 #include <ShlObj.h>
-#include <atlbase.h>
+#include <wil/com.h>
 #include <windows.h>
 #include <string>
 #include <Shlwapi.h>
@@ -97,7 +97,7 @@ void EdgeLister::showPopupMenu(HWND hWnd, const std::wstring& filename)
 	if (SUCCEEDED(hr))
 	{
 		// Get the desktop shell folder
-		CComPtr<IShellFolder> pDesktopFolder;
+		wil::com_ptr<IShellFolder> pDesktopFolder;
 		hr = SHGetDesktopFolder(&pDesktopFolder);
 		if (SUCCEEDED(hr))
 		{
@@ -108,7 +108,7 @@ void EdgeLister::showPopupMenu(HWND hWnd, const std::wstring& filename)
 			hr = pDesktopFolder->ParseDisplayName(hWnd, NULL, (LPWSTR)parentPath.c_str(), NULL, &pidlParent, NULL);
 			if (SUCCEEDED(hr))
 			{
-				CComPtr<IShellFolder> pParentFolder;
+				wil::com_ptr<IShellFolder> pParentFolder;
 				hr = pDesktopFolder->BindToObject(pidlParent, NULL, IID_IShellFolder, (void**)&pParentFolder);
 				if (SUCCEEDED(hr))
 				{
@@ -119,7 +119,7 @@ void EdgeLister::showPopupMenu(HWND hWnd, const std::wstring& filename)
 					if (SUCCEEDED(hr))
 					{
 						LPCITEMIDLIST aPidls[] = { pidlFile };
-						CComPtr<IContextMenu> pContextMenu;
+						wil::com_ptr<IContextMenu> pContextMenu;
 						hr = pParentFolder->GetUIObjectOf(hWnd, 1, aPidls, IID_IContextMenu, NULL, (void**)&pContextMenu);
 						if (SUCCEEDED(hr))
 						{

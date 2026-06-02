@@ -5,3 +5,5 @@ Build/Release/**
 EdgeViewer/EdgeViewer.vcxproj.user
 EdgeViewer/EdgeViewer.aps
 vcpkg_installed
+Release-*.zip
+*.nupkg
