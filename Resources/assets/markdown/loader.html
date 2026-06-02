@@ -1,13 +1,79 @@
 <html>
   <head>
-	  <meta charset="utf-8"/>
-	  <base href=http://local.example/__BASE_URL__/>
+    <meta charset="utf-8"/>
+    <base href=http://local.example/__BASE_URL__/>
+    
+    <!-- 核心样式 -->
     <link rel="stylesheet" href="http://assets.example/markdown/__CSS_NAME__">
     <link rel="stylesheet" href="http://assets.example/highlight_js/github.min.css">
-    <link rel="stylesheet" href="http://assets.example/markdown/github.markdown.alert.css">
+    
+    <!-- detect-charset (字符编码检测) -->
     <script src="http://assets.example/detect-charset.js"></script>
-    <script src="http://assets.example/markdown/marked.umd.js"></script>
-    <script src="http://assets.example/markdown/markdownExtension.js"></script>
+    
+    <!-- markdown-it 核心 -->
+    <script src="http://assets.example/markdown-it/markdown-it.min.js"></script>
+    
+    <!-- ======================================================== -->
+    <!-- mdit-plugins UMD 包                                       -->
+    <!-- 按类别分组, 框架会自动处理依赖顺序                          -->
+    <!-- 添加新插件: 在此添加 <script> 标签, 并在 mditPluginRegistry -->
+    <!-- 中添加对应定义                                             -->
+    <!-- ======================================================== -->
+    
+    <!-- 文本格式化 -->
+    <script src="http://assets.example/markdown-it/mdit-plugins/mdit-plugin-abbr.umd.js"></script>
+    <script src="http://assets.example/markdown-it/mdit-plugins/mdit-plugin-mark.umd.js"></script>
+    <script src="http://assets.example/markdown-it/mdit-plugins/mdit-plugin-sub.umd.js"></script>
+    <script src="http://assets.example/markdown-it/mdit-plugins/mdit-plugin-sup.umd.js"></script>
+    <script src="http://assets.example/markdown-it/mdit-plugins/mdit-plugin-ins.umd.js"></script>
+    <script src="http://assets.example/markdown-it/mdit-plugins/mdit-plugin-ruby.umd.js"></script>
+    
+    <!-- 块级元素 -->
+    <script src="http://assets.example/markdown-it/mdit-plugins/mdit-plugin-alert.umd.js"></script>
+    <script src="http://assets.example/markdown-it/mdit-plugins/mdit-plugin-container.umd.js"></script>
+    <script src="http://assets.example/markdown-it/mdit-plugins/mdit-plugin-dl.umd.js"></script>
+    <script src="http://assets.example/markdown-it/mdit-plugins/mdit-plugin-footnote.umd.js"></script>
+    <script src="http://assets.example/markdown-it/mdit-plugins/mdit-plugin-tasklist.umd.js"></script>
+    <script src="http://assets.example/markdown-it/mdit-plugins/mdit-plugin-align.umd.js"></script>
+    <script src="http://assets.example/markdown-it/mdit-plugins/mdit-plugin-tab.umd.js"></script>
+    
+    <!-- 图片与媒体 -->
+    <script src="http://assets.example/markdown-it/mdit-plugins/mdit-plugin-figure.umd.js"></script>
+    <script src="http://assets.example/markdown-it/mdit-plugins/mdit-plugin-img-size.umd.js"></script>
+    <script src="http://assets.example/markdown-it/mdit-plugins/mdit-plugin-img-lazyload.umd.js"></script>
+    <script src="http://assets.example/markdown-it/mdit-plugins/mdit-plugin-img-mark.umd.js"></script>
+    
+    <!-- 属性与样式 -->
+    <script src="http://assets.example/markdown-it/mdit-plugins/mdit-plugin-attrs.umd.js"></script>
+    <script src="http://assets.example/markdown-it/mdit-plugins/mdit-plugin-stylize.umd.js"></script>
+    <script src="http://assets.example/markdown-it/mdit-plugins/mdit-plugin-spoiler.umd.js"></script>
+    
+    <!-- 图表与代码 -->
+    <script src="http://assets.example/markdown-it/mdit-plugins/mdit-plugin-uml.umd.js"></script>
+    <script src="http://assets.example/markdown-it/mdit-plugins/mdit-plugin-plantuml.umd.js"></script>
+    
+    <!-- 数学公式 -->
+    <script src="http://assets.example/markdown-it/mdit-plugins/mdit-plugin-katex.umd.js"></script>
+    
+    <!-- 嵌入与链接 -->
+    <script src="http://assets.example/markdown-it/mdit-plugins/mdit-plugin-embed.umd.js"></script>
+    <script src="http://assets.example/markdown-it/mdit-plugins/mdit-plugin-icon.umd.js"></script>
+    <script src="http://assets.example/markdown-it/mdit-plugins/mdit-plugin-emoji.umd.js"></script>
+    
+    <!-- 布局 -->
+    <script src="http://assets.example/markdown-it/mdit-plugins/mdit-plugin-layout.umd.js"></script>
+    <script src="http://assets.example/markdown-it/mdit-plugins/mdit-plugin-field.umd.js"></script>
+    
+    <!-- 开发/演示 -->
+    <script src="http://assets.example/markdown-it/mdit-plugins/mdit-plugin-demo.umd.js"></script>
+    <script src="http://assets.example/markdown-it/mdit-plugins/mdit-plugin-inline-rule.umd.js"></script>
+    
+    <!-- ======================================================== -->
+    <!-- 插件注册表框架                                             -->
+    <!-- ======================================================== -->
+    <script src="http://assets.example/markdown-it/mditPluginRegistry.js"></script>
+    
+    <!-- 现有脚本 (保留 Mermaid, MathJax, highlight.js) -->
     <script src="http://assets.example/highlight_js/highlight.min.js"></script>
     <script src="http://assets.example/mermaid/mermaid.min.js"></script>
     <script src="http://assets.example/mathjax/tex-svg.js"></script>
@@ -16,43 +82,163 @@
     <div id="content"></div>
     
     <script>
-      const url = "http://local.example/__MD_FILENAME__"
-      fetch(url).then( r => r.arrayBuffer() ).then(async t => 
-        {
-          const decoder = new TextDecoder(detect_charset(new Uint8Array(t)));
-
-          marked.use({
-            extensions: [markdownAlertExtension],
-            renderer: customRenderer
+      // ========================================================
+      // 插件配置 (由 C++ MdProcessor 注入)
+      // ========================================================
+      var pluginConfig = __PLUGIN_CONFIG__;
+      
+      // ========================================================
+      // 自定义渲染规则 (Mermaid 兼容)
+      // ========================================================
+      function setupCustomRules(md) {
+          // 保留 Mermaid 代码块渲染
+          var defaultFence = md.renderer.rules.fence.bind(md.renderer.rules);
+          md.renderer.rules.fence = function(tokens, idx, options, env, self) {
+              var token = tokens[idx];
+              var info = token.info ? token.info.trim() : '';
+              if (info === 'mermaid') {
+                  return '<pre class="mermaid">' + escapeHtml(token.content) + '</pre>\n';
+              }
+              return defaultFence(tokens, idx, options, env, self);
+          };
+      }
+      
+      function escapeHtml(str) {
+          return str
+              .replace(/&/g, '&amp;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;')
+              .replace(/"/g, '&quot;');
+      }
+      
+      // ========================================================
+      // 主渲染逻辑
+      // ========================================================
+      var url = "http://local.example/__MD_FILENAME__";
+      
+      fetch(url).then(function(r) { return r.arrayBuffer(); }).then(async function(t) {
+          var decoder = new TextDecoder(detect_charset(new Uint8Array(t)));
+          
+          // 初始化 markdown-it
+          var md = window.markdownit({
+              html: true,
+              linkify: true,
+              typographer: true,
+              breaks: false,
+              highlight: function(str, lang) {
+                  if (lang && hljs.getLanguage(lang)) {
+                      try {
+                          return '<pre class="hljs"><code>' +
+                                 hljs.highlight(str, { language: lang, ignoreIllegals: true }).value +
+                                 '</code></pre>';
+                      } catch (__) {}
+                  }
+                  return '<pre class="hljs"><code>' + md.utils.escapeHtml(str) + '</code></pre>';
+              }
           });
-
-          // remove YAML frontmatter (must start at the very beginning of the file)
-          const htmlWithoutYaml = decoder.decode(t).replace(/^---\r?\n[\s\S]*?\n---\r?\n?/, '');
-          document.getElementById('content').innerHTML = marked.parse(htmlWithoutYaml);
-
-          // ---- MathJax----
+          
+          // 设置自定义渲染规则
+          setupCustomRules(md);
+          
+          // 通过注册表框架加载所有启用的插件
+          var result = window.MditPluginRegistry.registerPlugins(md, pluginConfig);
+          
+          // 调试信息 (可在控制台查看)
+          console.log('[mdit] Registered plugins:', result.registered);
+          if (result.skipped.length) console.log('[mdit] Skipped plugins:', result.skipped);
+          if (result.errors.length) console.error('[mdit] Plugin errors:', result.errors);
+          
+          // 移除 YAML frontmatter
+          var rawContent = decoder.decode(t).replace(/^---\r?\n[\s\S]*?\n---\r?\n?/, '');
+          
+          // 渲染 Markdown
+          document.getElementById('content').innerHTML = md.render(rawContent);
+          
+          // ---- MathJax (保留用于兼容, 特别是 tex-svg 模式) ----
           try {
-              MathJax.typeset();
+              if (typeof MathJax !== 'undefined' && MathJax.typeset) {
+                  MathJax.typeset();
+              }
           } catch(e) {
               console.log("MathJax error:", e);
           }
-
-          // ---- Mermaid ----
+          
+          // ---- Mermaid (通过 uml 插件已处理, 此处为后备) ----
           try {
-              mermaid.initialize({ startOnLoad: false });
-              await mermaid.run();
+              if (typeof mermaid !== 'undefined') {
+                  mermaid.initialize({ startOnLoad: false });
+                  await mermaid.run();
+              }
           } catch(e) {
               console.log("Mermaid error:", e);
           }
-
-          // ---- highlight.js ----
+          
+          // ---- highlight.js 后备处理 (处理未被 markdown-it 高亮的代码块) ----
           try {
-              hljs.highlightAll();
+              document.querySelectorAll('pre code:not(.hljs)').forEach(function(block) {
+                  hljs.highlightElement(block);
+              });
           } catch(e) {
               console.log("highlight.js error:", e);
           }
-
-        });
+          
+          // ---- Tab 标签页交互 ----
+          try {
+              setupTabInteraction();
+          } catch(e) {
+              console.log("Tab interaction error:", e);
+          }
+      });
+      
+      // ========================================================
+      // Tab 标签页点击交互
+      // ========================================================
+      function setupTabInteraction() {
+          document.querySelectorAll('.tabs-tabs-header').forEach(function(header) {
+              header.addEventListener('click', function(e) {
+                  var button = e.target.closest('.tabs-tab-button');
+                  if (!button) return;
+                  
+                  var wrapper = button.closest('.tabs-tabs-wrapper');
+                  if (!wrapper) return;
+                  
+                  var tabId = button.getAttribute('data-tab');
+                  if (!tabId) return;
+                  
+                  // 更新按钮状态
+                  wrapper.querySelectorAll('.tabs-tab-button').forEach(function(btn) {
+                      btn.classList.remove('active');
+                  });
+                  button.classList.add('active');
+                  
+                  // 更新内容显示
+                  wrapper.querySelectorAll('.tabs-tab-content').forEach(function(content) {
+                      content.classList.remove('active');
+                  });
+                  var targetContent = wrapper.querySelector('[data-tab-content="' + tabId + '"]');
+                  if (targetContent) targetContent.classList.add('active');
+              });
+          });
+          
+          // 激活第一个标签
+          document.querySelectorAll('.tabs-tabs-wrapper').forEach(function(wrapper) {
+              var firstBtn = wrapper.querySelector('.tabs-tab-button');
+              if (firstBtn) firstBtn.click();
+          });
+      }
+      
+      // ========================================================
+      // 锚点平滑滚动
+      // ========================================================
+      document.addEventListener('click', function(e) {
+          var link = e.target.closest('a');
+          if (link && link.getAttribute('href') && link.getAttribute('href').startsWith('#')) {
+              e.preventDefault();
+              var id = link.getAttribute('href').slice(1);
+              var el = document.getElementById(id);
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+          }
+      });
     </script>
   </body>
 </html>

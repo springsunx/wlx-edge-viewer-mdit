@@ -1,0 +1,64 @@
+name: Build Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    
+    - name: Setup MSVC
+      uses: microsoft/setup-msbuild@v2
+      
+    - name: Setup Vcpkg
+      uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgGitCommitId: 'a42af01b72c28a8e1d7b48107b33e4f286a55ef6'
+        
+    - name: Build Win32
+      run: |
+        msbuild EdgeViewer.sln /t:Build /p:Configuration=Release;Platform=Win32;UseEnv=true /v:minimal
+      shell: cmd
+      
+    - name: Build x64
+      run: |
+        msbuild EdgeViewer.sln /t:Build /p:Configuration=Release;Platform=x64;UseEnv=true /v:minimal
+      shell: cmd
+      
+    - name: Prepare Release
+      run: |
+        mkdir Release
+        xcopy /E /I /Q Resources\* Release\
+        copy /Y Build\EdgeViewer_Win32_Release\EdgeViewer-Win32.dll Release\EdgeViewer.wlx
+        copy /Y Build\EdgeViewer_x64_Release\EdgeViewer-x64.dll Release\EdgeViewer.wlx64
+      shell: cmd
+      
+    - name: Create Archive
+      run: |
+        Compress-Archive -Path Release\* -DestinationPath wlx-edge-viewer.zip
+      shell: pwsh
+      
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: wlx-edge-viewer
+        path: wlx-edge-viewer.zip
+        
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v2
+      with:
+        files: wlx-edge-viewer.zip
+        generate_release_notes: true

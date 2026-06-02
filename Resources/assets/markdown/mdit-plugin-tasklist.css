@@ -1,0 +1,26 @@
+.task-list-item {
+  list-style-type: none;
+  position: relative;
+  margin-left: -1.5em;
+  padding-left: 0;
+}
+
+.task-list-item input[type="checkbox"] {
+  position: absolute;
+  top: 0.3em;
+  left: 0;
+  margin: 0;
+  width: 1em;
+  height: 1em;
+  vertical-align: middle;
+  cursor: pointer;
+  accent-color: #2563eb;
+}
+
+.task-list-item label {
+  cursor: pointer;
+}
+
+ul.contains-task-list {
+  padding-left: 1.5em;
+}

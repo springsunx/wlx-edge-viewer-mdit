@@ -3,7 +3,7 @@
 #include "ProcessorInterface.h"
 
 // Markdown file:
-// Load using Marked.js
+// Load using markdown-it with mdit-plugins framework
 //------------------------------------------------------------------------
 class MdProcessor : public ProcessorInterface
 {
