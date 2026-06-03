@@ -100,7 +100,7 @@ Resources/assets/
 
 ### 1. 启用/禁用插件
 
-编辑 `edgeviewer.ini` 的 `[Markdown]` section：
+编辑 `EdgeViewer.ini` 的 `[Markdown]` section：
 
 ```ini
 [Markdown]
@@ -155,7 +155,7 @@ curl -L "https://cdn.jsdelivr.net/npm/@mdit/plugin-<name>/<name>.css" \
 }
 ```
 
-#### 步骤 4: 在 edgeviewer.ini 中添加开关
+#### 步骤 4: 在 EdgeViewer.ini 中添加开关
 
 ```ini
 [Markdown]
@@ -279,7 +279,7 @@ const CUSTOM_PLUGINS = [
 
 ### 修改文件
 - `Resources/assets/markdown/loader.html` - 使用 markdown-it + 插件框架
-- `Resources/edgeviewer.ini` - 添加插件启用/禁用配置
+- `Resources/EdgeViewer.ini` - 添加插件启用/禁用配置
 - `EdgeViewer/Processors/MdProcessor.cpp` - 传递插件配置到 HTML
 
 ### 保留文件 (不变)

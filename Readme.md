@@ -31,7 +31,7 @@ The following rendering libraries are used:
 
 ### 启用/禁用插件
 
-编辑 `edgeviewer.ini` 的 `[Markdown]` section：
+编辑 `EdgeViewer.ini` 的 `[Markdown]` section：
 
 ```ini
 [Markdown]
@@ -48,7 +48,7 @@ EnableTab=0         ; 禁用标签页
 
 ## Fine Tuning
 
-Plugin configuration is stored in the `edgeviewer.ini` file, located in the plugin folder.
+Plugin configuration is stored in the `EdgeViewer.ini` file, located in the plugin folder.
 
 ## Setup
 

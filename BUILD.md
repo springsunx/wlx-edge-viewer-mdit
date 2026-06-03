@@ -80,7 +80,7 @@ Actions 会自动:
 |------|------|
 | `EdgeViewer.wlx` | 32-bit Total Commander 插件 |
 | `EdgeViewer.wlx64` | 64-bit Total Commander 插件 |
-| `edgeviewer.ini` | 配置文件 |
+| `EdgeViewer.ini` | 配置文件 |
 | `assets/` | 渲染资源目录 |
 
 ## 目录结构
@@ -103,7 +103,7 @@ wlx-edge-viewer/
 │   │   │   ├── mditPluginRegistry.js
 │   │   │   └── mdit-plugins/
 │   │   └── ...
-│   └── edgeviewer.ini      # 默认配置
+│   └── EdgeViewer.ini      # 默认配置
 ├── EdgeViewer.sln          # Visual Studio 解决方案
 ├── build.bat               # 构建脚本
 ├── BuildMakeSetup.bat      # 原始构建脚本

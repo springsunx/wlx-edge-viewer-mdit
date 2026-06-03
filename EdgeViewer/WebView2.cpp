@@ -161,6 +161,45 @@ void AddResourceRequestHandling(ViewPtr webview)
 		}).Get(), &token);
 }
 //------------------------------------------------------------------------
+void AddNavigationHandling(ViewPtr webview)
+{
+	// Handle link clicks - open external links in default browser when OpenLinksInNewWindow=1
+	EventRegistrationToken token;
+
+	webview->add_NavigationStarting(Callback<ICoreWebView2NavigationStartingEventHandler>(
+		[=](ICoreWebView2* webview, ICoreWebView2NavigationStartingEventArgs* args) -> HRESULT
+		{
+			wil::unique_cotaskmem_string uri;
+			args->get_Uri(&uri);
+			std::wstring ws_uri = uri.get();
+
+			// Check if OpenLinksInNewWindow is enabled
+			bool openInNewWindow = to_int(GlobalSettings()["Chromium"]["OpenLinksInNewWindow"]) != 0;
+
+			if (openInNewWindow)
+			{
+				// Allow local navigation (virtual host mappings)
+				if (ws_uri.starts_with(L"http://local.example/") ||
+					ws_uri.starts_with(L"http://assets.example/") ||
+					ws_uri.starts_with(L"http://html.example/") ||
+					ws_uri.starts_with(L"data:") ||
+					ws_uri.starts_with(L"about:"))
+				{
+					return S_OK;  // Allow local navigation
+				}
+
+				// For external links, open in default browser and cancel navigation
+				if (ws_uri.starts_with(L"http://") || ws_uri.starts_with(L"https://"))
+				{
+					args->put_Cancel(TRUE);
+					ShellExecuteW(nullptr, L"open", ws_uri.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+				}
+			}
+
+			return S_OK;
+		}).Get(), &token);
+}
+//------------------------------------------------------------------------
 void ParseAndPostMessage(ICoreWebView2Controller* controller, HWND hWnd, const wil::unique_cotaskmem_string& message)
 {
     std::wstring message_wstr(message.get());
@@ -242,6 +281,7 @@ HRESULT CreateWebView2Environment(HWND hWnd, const std::wstring& fileToLoad, con
 
 							AddApplyStyleScript(webview);
 							AddResourceRequestHandling(webview);
+							AddNavigationHandling(webview);
 
 							controller->add_ZoomFactorChanged(Callback<ICoreWebView2ZoomFactorChangedEventHandler>(
 								[=](ICoreWebView2Controller* sender, IUnknown* args)

@@ -33,7 +33,7 @@
 #define CMD_MENU 3
 #define LISTPLUGIN_OK	0
 #define LISTPLUGIN_ERROR	1
-#define INI_NAME L"edgeviewer.ini"
+#define INI_NAME L"EdgeViewer.ini"
 #define EDGE_LISTER_CLASS "mdLister"
 #ifdef _WIN64
 #define BROWSER_FOLDER_KEY "BrowserExecutableX64Folder"
