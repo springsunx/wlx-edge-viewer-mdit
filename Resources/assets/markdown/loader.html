@@ -252,7 +252,7 @@
                   wrapper.querySelectorAll('.tabs-tab-content').forEach(function(content) {
                       content.classList.remove('active');
                   });
-                  var targetContent = wrapper.querySelector('[data-tab-content="' + tabId + '"]');
+                  var targetContent = wrapper.querySelector('[data-index="' + tabId + '"]');
                   if (targetContent) targetContent.classList.add('active');
               });
           });
