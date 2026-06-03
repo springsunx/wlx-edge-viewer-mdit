@@ -44,3 +44,13 @@ void Navigator::Print() const
 	mWebView->ExecuteScript(L"window.print();", NULL);
 }
 //------------------------------------------------------------------------
+void Navigator::GoBack() const
+{
+	mWebView->GoBack();
+}
+//------------------------------------------------------------------------
+void Navigator::GoForward() const
+{
+	mWebView->GoForward();
+}
+//------------------------------------------------------------------------

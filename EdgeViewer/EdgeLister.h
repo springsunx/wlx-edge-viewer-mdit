@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Globals.h"
+#include "Toolbar.h"
 
 //------------------------------------------------------------------------
 class EdgeLister
@@ -11,5 +12,6 @@ public:
 private:
 	static LRESULT CALLBACK pluginWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 	static void showPopupMenu(HWND hWnd, const std::wstring& filename);
+	static void HandleToolbarCommand(HWND hWnd, ViewPtr webview, UINT cmdId);
 };
 //------------------------------------------------------------------------

@@ -34,6 +34,7 @@
     <ClCompile Include="Processors\ProcessorRegistry.cpp" />
     <ClCompile Include="Processors\RstProcessor.cpp" />
     <ClCompile Include="Processors\UrlProcessor.cpp" />
+    <ClCompile Include="Toolbar.cpp" />
     <ClCompile Include="WebView2.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -52,6 +53,7 @@
     <ClInclude Include="Processors\RstProcessor.h" />
     <ClInclude Include="Processors\UrlProcessor.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="Toolbar.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="EdgeViewer.def" />

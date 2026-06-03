@@ -16,6 +16,8 @@ public:
 	void Open(const fs::path& path) const;
 	void Search(const std::wstring& str, int params) const;
 	void Print() const;
+	void GoBack() const;
+	void GoForward() const;
 
 private:
 	ViewPtr mWebView;

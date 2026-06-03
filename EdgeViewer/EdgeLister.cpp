@@ -7,9 +7,16 @@
 #include <string>
 #include <Shlwapi.h>
 
+// Global toolbar instance (one per window)
+std::map<HWND, Toolbar> gs_Toolbars;
+bool gs_ShowToolbar = true;
+
 //------------------------------------------------------------------------
 void EdgeLister::RegisterClass(HINSTANCE hinst)
 {
+	// Check if toolbar should be shown
+	gs_ShowToolbar = to_int(GlobalSettings()["Chromium"]["ShowToolbar"]) != 0;
+
 	WNDCLASSA wc = {};
 	wc.hInstance = hinst;
 	wc.lpfnWndProc = pluginWndProc;
@@ -17,32 +24,161 @@ void EdgeLister::RegisterClass(HINSTANCE hinst)
 	RegisterClassA(&wc);
 }
 //------------------------------------------------------------------------
+void EdgeLister::HandleToolbarCommand(HWND hWnd, ViewPtr webview, UINT cmdId)
+{
+	if (!webview)
+		return;
+
+	Navigator nav(webview);
+
+	switch (cmdId)
+	{
+	case Toolbar::ID_BACK:
+		nav.GoBack();
+		break;
+	case Toolbar::ID_FORWARD:
+		nav.GoForward();
+		break;
+	case Toolbar::ID_HOME:
+		// Reload current page
+		webview->Reload();
+		break;
+	case Toolbar::ID_REFRESH:
+		webview->Reload();
+		break;
+	}
+}
+//------------------------------------------------------------------------
 LRESULT EdgeLister::pluginWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	if (const auto& it = gs_Views.find(hWnd); it != std::end(gs_Views))
+	// Debug: log first few messages
+	static int msgCount = 0;
+	if (msgCount < 3)
 	{
-		ViewPtr webview;
-		ViewCtrlPtr controller = it->second;
+	 wchar_t buf[256];
+	 wsprintf(buf, L"EdgeLister msg=%u wParam=%u", message, wParam);
+	 OutputDebugString(buf);
+	 msgCount++;
+	}
 
-		switch (message)
+	switch (message)
+	{
+	case WM_CREATE:
 		{
-		case WM_SIZE:	// resize webview according to EdgeLister size
+			OutputDebugString(L"EdgeLister: WM_CREATE - Creating toolbar");
+			
+			// Create toolbar
+			auto [it, inserted] = gs_Toolbars.try_emplace(hWnd);
+			if (inserted)
+			{
+				if (it->second.Create(hWnd, GetModuleHandle(NULL)))
+				{
+					it->second.Resize();
+					OutputDebugString(L"EdgeLister: Toolbar created and resized");
+					// Post WM_SIZE to adjust WebView bounds after toolbar is created
+					PostMessage(hWnd, WM_SIZE, 0, 0);
+				}
+				else
+				{
+					OutputDebugString(L"EdgeLister: Toolbar creation failed!");
+				}
+			}
+		}
+		break;
+
+	case WM_SIZE:
+		{
+			// Resize toolbar
+			auto toolbarIt = gs_Toolbars.find(hWnd);
+			if (toolbarIt != gs_Toolbars.end())
+			{
+				toolbarIt->second.Resize();
+			}
+
+			// Resize WebView if exists
+			auto viewIt = gs_Views.find(hWnd);
+			if (viewIt != gs_Views.end())
 			{
 				RECT bounds;
 				GetClientRect(hWnd, &bounds);
-				controller->put_Bounds(bounds);
-			}
-			break;
 
-		case WM_COPYDATA:	// generic "data received" event
+				// Adjust for toolbar
+				int toolbarHeight = 0;
+				if (toolbarIt != gs_Toolbars.end())
+				{
+					toolbarHeight = toolbarIt->second.GetHeight();
+				}
+
+				bounds.top += toolbarHeight;
+				viewIt->second->put_Bounds(bounds);
+			}
+		}
+		break;
+
+	case WM_COMMAND:
+		{
+			UINT cmdId = LOWORD(wParam);
+			if (cmdId >= Toolbar::ID_BACK && cmdId <= Toolbar::ID_REFRESH)
 			{
-				controller->get_CoreWebView2(&webview);
+				auto it = gs_Views.find(hWnd);
+				if (it != gs_Views.end())
+				{
+					ViewPtr webview;
+					it->second->get_CoreWebView2(&webview);
+					HandleToolbarCommand(hWnd, webview, cmdId);
+				}
+			}
+		}
+		break;
+
+	case WM_NOTIFY:
+		{
+			// Handle toolbar tooltips
+			LPNMHDR pnmh = (LPNMHDR)lParam;
+			if (pnmh->code == TTN_GETDISPINFO)
+			{
+				LPNMTTDISPINFO pttv = (LPNMTTDISPINFO)lParam;
+				switch (pttv->hdr.idFrom)
+				{
+				case Toolbar::ID_BACK:
+					wcscpy_s(pttv->szText, L"Back (Alt+Left)");
+					break;
+				case Toolbar::ID_FORWARD:
+					wcscpy_s(pttv->szText, L"Forward (Alt+Right)");
+					break;
+				case Toolbar::ID_HOME:
+					wcscpy_s(pttv->szText, L"Home");
+					break;
+				case Toolbar::ID_REFRESH:
+					wcscpy_s(pttv->szText, L"Refresh (F5)");
+					break;
+				}
+			}
+		}
+		break;
+
+	case WM_COPYDATA:	// generic "data received" event
+		{
+			auto it = gs_Views.find(hWnd);
+			if (it != gs_Views.end())
+			{
+				ViewPtr webview;
+				it->second->get_CoreWebView2(&webview);
 				auto pcds = (COPYDATASTRUCT*)lParam;
 				auto strData = std::wstring((wchar_t*)pcds->lpData);
 
 				// command: navigate to the specified resource
 				if (pcds->dwData == CMD_NAVIGATE)
+				{
 					Navigator(webview).Open(strData);
+
+					// Update toolbar after navigation
+					auto toolbarIt = gs_Toolbars.find(hWnd);
+					if (toolbarIt != gs_Toolbars.end())
+					{
+						toolbarIt->second.UpdateState(webview);
+					}
+				}
 
 				// print the current file
 				if (pcds->dwData == CMD_PRINT)
@@ -61,27 +197,38 @@ LRESULT EdgeLister::pluginWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 					Navigator(webview).Search(pattern, params);
 				}
 			}
-			break;
+		}
+		break;
 
-		case WM_SETFOCUS:	// set the real focus on the webview
+	case WM_SETFOCUS:	// set the real focus on the webview
+		{
+			auto it = gs_Views.find(hWnd);
+			if (it != gs_Views.end())
 			{
-				controller->MoveFocus(COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC);
+				it->second->MoveFocus(COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC);
 			}
-			break;
+		}
+		break;
 
-		case WM_WEBVIEW_JS_KEYDOWN:
-			{
-				// pass hotkeys 1-8, and 'q'/'Q' to allow closing the lister
-				if ((wParam >= '1' && wParam <= '8') || wParam == 'Q')
-					PostMessage(GetParent(hWnd), WM_KEYDOWN, wParam, NULL);
-				break;
-			}
-		case WM_WEBVIEW_KEYDOWN:	// resend webview keypess events to the parent
-			{
+	case WM_WEBVIEW_JS_KEYDOWN:
+		{
+			// pass hotkeys 1-8, and 'q'/'Q' to allow closing the lister
+			if ((wParam >= '1' && wParam <= '8') || wParam == 'Q')
 				PostMessage(GetParent(hWnd), WM_KEYDOWN, wParam, NULL);
-			}
 			break;
 		}
+	case WM_WEBVIEW_KEYDOWN:	// resend webview keypess events to the parent
+		{
+			PostMessage(GetParent(hWnd), WM_KEYDOWN, wParam, NULL);
+		}
+		break;
+
+	case WM_DESTROY:
+		{
+			// Cleanup toolbar
+			gs_Toolbars.erase(hWnd);
+		}
+		break;
 	}
 
 	return DefWindowProc(hWnd, message, wParam, lParam);

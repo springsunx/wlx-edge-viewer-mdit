@@ -1,5 +1,6 @@
 #include "Globals.h"
 #include "Navigator.h"
+#include "Toolbar.h"
 #include <wrl.h>
 #include <shlwapi.h>
 #include <webview2environmentoptions.h>
@@ -9,6 +10,9 @@
 using namespace Microsoft::WRL;
 //------------------------------------------------------------------------
 std::mutex gs_ViewCreateLock;
+
+// Forward declaration - defined in EdgeLister.cpp
+extern std::map<HWND, Toolbar> gs_Toolbars;
 
 //------------------------------------------------------------------------
 bool ZoomHotkeyHandled(ICoreWebView2Controller* ctrl, UINT key)
@@ -199,6 +203,27 @@ void AddNavigationHandling(ViewPtr webview)
 			return S_OK;
 		}).Get(), &token);
 }
+
+//------------------------------------------------------------------------
+void AddNavigationCompleteHandling(ViewPtr webview, HWND hWnd)
+{
+	// Update toolbar state when navigation completes
+	EventRegistrationToken token;
+
+	webview->add_NavigationCompleted(Callback<ICoreWebView2NavigationCompletedEventHandler>(
+		[=](ICoreWebView2* webview, ICoreWebView2NavigationCompletedEventArgs* args) -> HRESULT
+		{
+			// Update toolbar state
+			auto toolbarIt = gs_Toolbars.find(hWnd);
+			if (toolbarIt != gs_Toolbars.end())
+			{
+				ViewPtr view;
+				webview->QueryInterface(IID_PPV_ARGS(&view));
+				toolbarIt->second.UpdateState(view);
+			}
+			return S_OK;
+		}).Get(), &token);
+}
 //------------------------------------------------------------------------
 void ParseAndPostMessage(ICoreWebView2Controller* controller, HWND hWnd, const wil::unique_cotaskmem_string& message)
 {
@@ -282,6 +307,7 @@ HRESULT CreateWebView2Environment(HWND hWnd, const std::wstring& fileToLoad, con
 							AddApplyStyleScript(webview);
 							AddResourceRequestHandling(webview);
 							AddNavigationHandling(webview);
+							AddNavigationCompleteHandling(webview, hWnd);
 
 							controller->add_ZoomFactorChanged(Callback<ICoreWebView2ZoomFactorChangedEventHandler>(
 								[=](ICoreWebView2Controller* sender, IUnknown* args)
@@ -294,6 +320,14 @@ HRESULT CreateWebView2Environment(HWND hWnd, const std::wstring& fileToLoad, con
 
 							RECT bounds;
 							GetClientRect(hWnd, &bounds);
+
+							// Adjust bounds for toolbar
+							auto toolbarIt = gs_Toolbars.find(hWnd);
+							if (toolbarIt != gs_Toolbars.end())
+							{
+								bounds.top += toolbarIt->second.GetHeight();
+							}
+
 							controller->put_Bounds(bounds);
 
 							Navigator(webview).Open(fileToLoad);
