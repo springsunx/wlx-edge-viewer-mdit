@@ -7,6 +7,16 @@
     <link rel="stylesheet" href="http://assets.example/markdown/__CSS_NAME__">
     <link rel="stylesheet" href="http://assets.example/highlight_js/github.min.css">
     
+    <!-- mdit-plugins CSS -->
+    <link rel="stylesheet" href="http://assets.example/markdown/mdit-plugin-alert.css">
+    <link rel="stylesheet" href="http://assets.example/markdown/mdit-plugin-tab.css">
+    <link rel="stylesheet" href="http://assets.example/markdown/mdit-plugin-spoiler.css">
+    <link rel="stylesheet" href="http://assets.example/markdown/mdit-plugin-tasklist.css">
+    
+    <!-- Zen theme component styles -->
+    <link rel="stylesheet" href="http://assets.example/markdown/zen-container.css">
+    <link rel="stylesheet" href="http://assets.example/markdown/zen-tab.css">
+    
     <!-- detect-charset (字符编码检测) -->
     <script src="http://assets.example/detect-charset.js"></script>
     
@@ -242,18 +252,24 @@
                   var tabId = button.getAttribute('data-tab');
                   if (!tabId) return;
                   
-                  // 更新按钮状态
+                  // 更新按钮状态 - 使用 class 和 data-active 属性
                   wrapper.querySelectorAll('.tabs-tab-button').forEach(function(btn) {
                       btn.classList.remove('active');
+                      btn.removeAttribute('data-active');
                   });
                   button.classList.add('active');
+                  button.setAttribute('data-active', '');
                   
-                  // 更新内容显示
+                  // 更新内容显示 - 使用 class 和 data-active 属性
                   wrapper.querySelectorAll('.tabs-tab-content').forEach(function(content) {
                       content.classList.remove('active');
+                      content.removeAttribute('data-active');
                   });
                   var targetContent = wrapper.querySelector('[data-index="' + tabId + '"]');
-                  if (targetContent) targetContent.classList.add('active');
+                  if (targetContent) {
+                      targetContent.classList.add('active');
+                      targetContent.setAttribute('data-active', '');
+                  }
               });
           });
           
