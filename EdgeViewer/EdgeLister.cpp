@@ -39,10 +39,6 @@ void EdgeLister::HandleToolbarCommand(HWND hWnd, ViewPtr webview, UINT cmdId)
 	case Toolbar::ID_FORWARD:
 		nav.GoForward();
 		break;
-	case Toolbar::ID_HOME:
-		// Reload current page
-		webview->Reload();
-		break;
 	case Toolbar::ID_REFRESH:
 		webview->Reload();
 		break;
@@ -51,16 +47,6 @@ void EdgeLister::HandleToolbarCommand(HWND hWnd, ViewPtr webview, UINT cmdId)
 //------------------------------------------------------------------------
 LRESULT EdgeLister::pluginWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	// Debug: log first few messages
-	static int msgCount = 0;
-	if (msgCount < 3)
-	{
-	 wchar_t buf[256];
-	 wsprintf(buf, L"EdgeLister msg=%u wParam=%u", message, wParam);
-	 OutputDebugString(buf);
-	 msgCount++;
-	}
-
 	switch (message)
 	{
 	case WM_CREATE:
@@ -145,9 +131,6 @@ LRESULT EdgeLister::pluginWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM
 					break;
 				case Toolbar::ID_FORWARD:
 					wcscpy_s(pttv->szText, L"Forward (Alt+Right)");
-					break;
-				case Toolbar::ID_HOME:
-					wcscpy_s(pttv->szText, L"Home");
 					break;
 				case Toolbar::ID_REFRESH:
 					wcscpy_s(pttv->szText, L"Refresh (F5)");

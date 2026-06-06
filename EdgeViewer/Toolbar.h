@@ -32,8 +32,7 @@ public:
 	enum ButtonID {
 		ID_BACK = 1001,
 		ID_FORWARD = 1002,
-		ID_HOME = 1003,
-		ID_REFRESH = 1004,
+		ID_REFRESH = 1003,
 	};
 
 private:

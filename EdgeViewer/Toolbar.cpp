@@ -12,7 +12,6 @@ Toolbar::Toolbar()
 //------------------------------------------------------------------------
 Toolbar::~Toolbar()
 {
-	// Don't destroy the toolbar window here - it's owned by the parent
 	m_hToolbar = nullptr;
 }
 
@@ -66,65 +65,39 @@ bool Toolbar::Create(HWND hParent, HINSTANCE hInst)
 	);
 
 	if (!m_hToolbar)
-	{
-		OutputDebugString(L"Toolbar: CreateWindowEx failed");
 		return false;
-	}
-
-	OutputDebugString(L"Toolbar: Window created");
 
 	// IMPORTANT: Must call TB_BUTTONSTRUCTSIZE before TB_ADDBUTTONS
 	SendMessage(m_hToolbar, TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON), 0);
 
-	// Set toolbar extended style
-	SendMessage(m_hToolbar, TB_SETEXTENDEDSTYLE, 0, TBSTYLE_EX_DRAWDDARROWS);
-
 	// Set button size
-	SendMessage(m_hToolbar, TB_SETBUTTONSIZE, 0, MAKELONG(60, 28));
-	SendMessage(m_hToolbar, TB_SETBITMAPSIZE, 0, MAKELONG(0, 0));
+	SendMessage(m_hToolbar, TB_SETBUTTONSIZE, 0, MAKELONG(60, 24));
 
-	// Add buttons
-	TBBUTTON buttons[4] = {};
+	// Add buttons with text
+	TBBUTTON buttons[3] = {};
 
 	// Back button
 	buttons[0].iBitmap = I_IMAGENONE;
 	buttons[0].idCommand = ID_BACK;
 	buttons[0].fsState = TBSTATE_ENABLED;
 	buttons[0].fsStyle = BTNS_BUTTON | BTNS_AUTOSIZE;
-	buttons[0].iString = (INT_PTR)L" Back ";
+	buttons[0].iString = (INT_PTR)L"Back";
 
 	// Forward button
 	buttons[1].iBitmap = I_IMAGENONE;
 	buttons[1].idCommand = ID_FORWARD;
 	buttons[1].fsState = TBSTATE_ENABLED;
 	buttons[1].fsStyle = BTNS_BUTTON | BTNS_AUTOSIZE;
-	buttons[1].iString = (INT_PTR)L" Fwd ";
-
-	// Home button
-	buttons[2].iBitmap = I_IMAGENONE;
-	buttons[2].idCommand = ID_HOME;
-	buttons[2].fsState = TBSTATE_ENABLED;
-	buttons[2].fsStyle = BTNS_BUTTON | BTNS_AUTOSIZE;
-	buttons[2].iString = (INT_PTR)L" Home ";
+	buttons[1].iString = (INT_PTR)L"Forward";
 
 	// Refresh button
-	buttons[3].iBitmap = I_IMAGENONE;
-	buttons[3].idCommand = ID_REFRESH;
-	buttons[3].fsState = TBSTATE_ENABLED;
-	buttons[3].fsStyle = BTNS_BUTTON | BTNS_AUTOSIZE;
-	buttons[3].iString = (INT_PTR)L" Refresh ";
+	buttons[2].iBitmap = I_IMAGENONE;
+	buttons[2].idCommand = ID_REFRESH;
+	buttons[2].fsState = TBSTATE_ENABLED;
+	buttons[2].fsStyle = BTNS_BUTTON | BTNS_AUTOSIZE;
+	buttons[2].iString = (INT_PTR)L"Refresh";
 
-	SendMessage(m_hToolbar, TB_BUTTONCOUNT, 0, 0);
-	LRESULT result = SendMessage(m_hToolbar, TB_ADDBUTTONS, 4, (LPARAM)&buttons);
-	
-	if (result)
-		OutputDebugString(L"Toolbar: Buttons added");
-	else
-		OutputDebugString(L"Toolbar: Failed to add buttons");
-
-	// Force the toolbar to show
-	ShowWindow(m_hToolbar, SW_SHOW);
-	UpdateWindow(m_hToolbar);
+	SendMessage(m_hToolbar, TB_ADDBUTTONS, 3, (LPARAM)&buttons);
 
 	// Apply theme
 	ApplyTheme();
@@ -143,6 +116,7 @@ void Toolbar::Resize()
 
 	// Set toolbar bounds (full width)
 	SetWindowPos(m_hToolbar, HWND_TOP, 0, 0, rcParent.right, m_height, SWP_SHOWWINDOW);
+	SendMessage(m_hToolbar, TB_AUTOSIZE, 0, 0);
 }
 
 //------------------------------------------------------------------------
@@ -151,7 +125,6 @@ void Toolbar::UpdateState(ViewPtr webview)
 	if (!webview || !m_hToolbar)
 		return;
 
-	// Update back/forward button states
 	BOOL canGoBack = FALSE;
 	BOOL canGoForward = FALSE;
 	webview->get_CanGoBack(&canGoBack);
@@ -160,7 +133,6 @@ void Toolbar::UpdateState(ViewPtr webview)
 	SendMessage(m_hToolbar, TB_ENABLEBUTTON, ID_BACK, MAKELONG(canGoBack, 0));
 	SendMessage(m_hToolbar, TB_ENABLEBUTTON, ID_FORWARD, MAKELONG(canGoForward, 0));
 
-	// Update dark mode state
 	if (gs_IsDarkMode != m_isDarkMode)
 	{
 		m_isDarkMode = gs_IsDarkMode;
@@ -176,13 +148,11 @@ void Toolbar::ApplyTheme()
 
 	if (m_isDarkMode)
 	{
-		// Dark theme colors
 		COLORREF darkBg = RGB(50, 50, 50);
 		SetClassLongPtr(m_hToolbar, GCLP_HBRBACKGROUND, (LONG_PTR)CreateSolidBrush(darkBg));
 	}
 	else
 	{
-		// Light theme colors
 		SetClassLongPtr(m_hToolbar, GCLP_HBRBACKGROUND, (LONG_PTR)GetSysColorBrush(COLOR_BTNFACE));
 	}
 
