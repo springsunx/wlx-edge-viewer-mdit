@@ -135,18 +135,87 @@
       var pluginConfig = __PLUGIN_CONFIG__;
       
       // ========================================================
-      // 自定义渲染规则 (Mermaid 兼容)
+      // 代码块复制功能
+      // ========================================================
+      function createCopyHandler() {
+          if (typeof window.copyCodeToClipboard === 'function') return;
+          
+          function showCopyFeedback(button) {
+              var originalText = button.innerText;
+              button.innerText = 'Copied!';
+              button.classList.add('copied');
+              setTimeout(function() { 
+                  button.innerText = originalText; 
+                  button.classList.remove('copied');
+              }, 2000);
+          }
+          
+          function copyToClipboard(text, button) {
+              var normalized = String(text || '').replace(/\r\n/g, '\n');
+              var trimmed = normalized.replace(/\s+$/, '');
+              var textArea = document.createElement('textarea');
+              textArea.value = trimmed;
+              textArea.style.cssText = 'position:fixed;top:0;left:0;width:2em;height:2em;padding:0;border:none;outline:none;box-shadow:none;background:transparent';
+              document.body.appendChild(textArea);
+              textArea.select();
+              try {
+                  if (document.execCommand('copy')) {
+                      showCopyFeedback(button);
+                  } else {
+                      button.innerText = 'Copy failed';
+                      setTimeout(function() { button.innerText = 'Copy'; }, 2000);
+                  }
+              } catch (err) {
+                  console.error('Copy error:', err);
+                  button.innerText = 'Copy failed';
+                  setTimeout(function() { button.innerText = 'Copy'; }, 2000);
+              } finally {
+                  document.body.removeChild(textArea);
+              }
+          }
+          
+          window.copyCodeToClipboard = function(button) {
+              if (typeof document === 'undefined') return;
+              var codeBlock = button.closest('.code-block-wrapper');
+              var codeElement = codeBlock ? codeBlock.querySelector('.code-block-content') : null;
+              var code = codeElement ? (codeElement.innerText || codeElement.textContent) : '';
+              copyToClipboard(code, button);
+          };
+      }
+      
+      // 初始化复制功能
+      createCopyHandler();
+      
+      // ========================================================
+      // 自定义渲染规则 (Mermaid 兼容 + 代码块复制按钮)
       // ========================================================
       function setupCustomRules(md) {
-          // 保留 Mermaid 代码块渲染
-          var defaultFence = md.renderer.rules.fence.bind(md.renderer.rules);
+          // 保存原始的 fence 渲染器
+          var defaultFence = md.renderer.rules.fence || function(tokens, idx, options, env, self) {
+              return self.renderToken(tokens, idx, options);
+          };
+          
           md.renderer.rules.fence = function(tokens, idx, options, env, self) {
               var token = tokens[idx];
               var info = token.info ? token.info.trim() : '';
+              
+              // Mermaid 代码块特殊处理
               if (info === 'mermaid') {
                   return '<pre class="mermaid">' + escapeHtml(token.content) + '</pre>\n';
               }
-              return defaultFence(tokens, idx, options, env, self);
+              
+              // 获取语言和高亮内容
+              var lang = info.split(/\s+/)[0] || '';
+              var highlighted = defaultFence(tokens, idx, options, env, self);
+              
+              // 包装为带复制按钮的代码块
+              return '<div class="code-block-wrapper">' +
+                  '<div class="code-block-header">' +
+                  '<button class="copy-code-button" onclick="window.copyCodeToClipboard(this)">Copy</button>' +
+                  (lang ? '<span class="code-block-lang">' + lang + '</span>' : '') +
+                  '</div>' +
+                  '<div class="code-block-content">' + highlighted + '</div>' +
+                  '</div>';
           };
       }
       

@@ -176,6 +176,80 @@ pre code {
     line-height: 1.5;
 }
 
+/* Code block with copy button */
+.code-block-wrapper {
+    margin: 16px 0;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--neutral-200);
+}
+
+.code-block-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 12px;
+    background-color: var(--neutral-100);
+    border-bottom: 1px solid var(--neutral-200);
+    font-size: 12px;
+    color: var(--neutral-500);
+}
+
+.code-block-lang {
+    font-weight: 600;
+    color: var(--neutral-700);
+    margin-left: auto;
+    padding-right: 4px;
+}
+
+.copy-code-button {
+    background-color: var(--neutral-200);
+    border: 1px solid var(--neutral-300);
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--neutral-700);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.copy-code-button:hover {
+    background-color: var(--neutral-300);
+}
+
+.copy-code-button.copied {
+    background-color: var(--green-500);
+    color: white;
+    border-color: var(--green-500);
+}
+
+.code-block-content {
+    padding: 12px;
+    overflow-x: auto;
+    background-color: var(--neutral-50);
+}
+
+.code-block-content pre {
+    margin: 0;
+    padding: 0;
+    background-color: transparent;
+    border: none;
+    white-space: pre;
+}
+
+.code-block-content code {
+    background-color: transparent;
+    padding: 0;
+}
+
+pre code {
+    background-color: transparent;
+    padding: 0;
+    font-size: 0.889em;
+    line-height: 1.5;
+}
+
 /* Tables */
 table {
     border-collapse: collapse;
